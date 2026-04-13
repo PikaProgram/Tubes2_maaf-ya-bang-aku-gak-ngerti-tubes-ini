@@ -266,6 +266,10 @@ func ParseHTML(rawHTML string) (*models.DOMNode, error) {
 			for _, attr := range token.attrs {
 				if attr.key == "id" {
 					node.Attributes["id"] = attr.val
+				} else if attr.key == "class" {
+					node.Classes = strings.Fields(attr.val)
+				} else {
+					node.Attributes[attr.key] = attr.val
 				}
 			}
 			parent.Children = append(parent.Children, node)
