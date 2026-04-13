@@ -7,15 +7,10 @@ import (
 )
 
 func main() {
-    rawData, err := services.FetchHTMLPage("x.com")
+    rawHTML := `<html><head><title>Test</title></head><body><div class="a"><p id="b">Hello</p></div></body></html>`
+    doc, err := services.ParseHTML(rawHTML)
     if err != nil {
-        log.Fatalf("Error fetching: %v", err)
+        log.Fatal(err)
     }
-    fmt.Println(rawData)
-
-    parsedData, err := services.ParseHTML(rawData)
-    if err != nil {
-        log.Fatalf("Error parsing: %v", err)
-    }
-    fmt.Printf("%+v\n", parsedData)
+    fmt.Println("Node awal: ", doc.Type)
 }
