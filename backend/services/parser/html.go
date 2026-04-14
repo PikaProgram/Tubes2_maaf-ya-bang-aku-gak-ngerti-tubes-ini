@@ -1,4 +1,4 @@
-package services
+package parser
 
 import (
 	"backend/models"
@@ -276,9 +276,11 @@ func ParseHTML(rawHTML string) (*models.DOMNode, error) {
 			for _, attr := range token.attrs {
 				switch attr.key {
 				case "id":
+					node.ID = attr.val
 					node.Attributes["id"] = attr.val
 				case "class":
 					node.Classes = strings.Fields(attr.val)
+					node.Attributes["class"] = attr.val
 				default:
 					node.Attributes[attr.key] = attr.val
 				}
