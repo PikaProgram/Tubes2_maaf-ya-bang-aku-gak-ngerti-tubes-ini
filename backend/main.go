@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	targetURL := "https://www.instagram.com/rasyad_2771/"
+	targetURL := "https://motherfuckingwebsite.com/"
 
 	fmt.Println("Fetching:", targetURL)
 	rawHTML, err := services.FetchHTMLPage(targetURL)
@@ -22,9 +22,5 @@ func main() {
 		log.Fatal("Parser error:", err)
 	}
 
-	fmt.Println("Tree:")
-	fmt.Println("<" + root.Tag + ">")
-	for i, child := range root.Children {
-		utils.PrintTree(child, "", i == len(root.Children)-1)
-	}
+	utils.PrintTree(root)
 }

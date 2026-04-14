@@ -7,25 +7,25 @@ import (
 )
 
 var voidElements = map[string]bool{
-	"area": true,
-	"base": true,
-	"br": true,
-	"col": true,
-	"embed": true,
-	"hr": true,
-	"img": true,
-	"input": true,
-	"link": true,
-	"meta": true,
-	"param": true,
+	"area":   true,
+	"base":   true,
+	"br":     true,
+	"col":    true,
+	"embed":  true,
+	"hr":     true,
+	"img":    true,
+	"input":  true,
+	"link":   true,
+	"meta":   true,
+	"param":  true,
 	"source": true,
-	"track": true,
-	"wbr": true,
+	"track":  true,
+	"wbr":    true,
 }
 
 var rawTextElements = map[string]bool{
 	"script": true,
-	"style": true,
+	"style":  true,
 }
 
 type tokenType int
@@ -45,9 +45,9 @@ type htmlAttr struct {
 }
 
 type htmlToken struct {
-	typ tokenType
-	tag string
-	attrs []htmlAttr
+	typ       tokenType
+	tag       string
+	attrs     []htmlAttr
 	selfClose bool
 }
 
@@ -240,12 +240,20 @@ func (t *htmlTokenizer) next() htmlToken {
 }
 
 func ParseHTML(rawHTML string) (*models.DOMNode, error) {
+	currentNodeID := 0
+	nextNodeID := func() int {
+		id := currentNodeID
+		currentNodeID++
+		return id
+	}
+
 	tkn := newHTMLTokenizer(rawHTML)
 	root := &models.DOMNode{
-		Tag: "#document",
-		Classes: []string{},
+		NodeID:     nextNodeID(),
+		Tag:        "#document",
+		Classes:    []string{},
 		Attributes: make(map[string]string),
-		Depth: 0,
+		Depth:      0,
 	}
 	stack := []*models.DOMNode{root}
 	for {
@@ -257,21 +265,25 @@ func ParseHTML(rawHTML string) (*models.DOMNode, error) {
 		if token.typ == tokenOpenTag {
 			parent := stack[len(stack)-1]
 			node := &models.DOMNode{
-				Tag: token.tag,
-				Classes: []string{},
+				NodeID:     nextNodeID(),
+				Tag:        token.tag,
+				Classes:    []string{},
 				Attributes: make(map[string]string),
-				Parent: parent,
-				Depth: parent.Depth + 1,
+				Parent:     parent,
+				Depth:      parent.Depth + 1,
 			}
+
 			for _, attr := range token.attrs {
-				if attr.key == "id" {
+				switch attr.key {
+				case "id":
 					node.Attributes["id"] = attr.val
-				} else if attr.key == "class" {
+				case "class":
 					node.Classes = strings.Fields(attr.val)
-				} else {
+				default:
 					node.Attributes[attr.key] = attr.val
 				}
 			}
+
 			parent.Children = append(parent.Children, node)
 
 			if !token.selfClose {
