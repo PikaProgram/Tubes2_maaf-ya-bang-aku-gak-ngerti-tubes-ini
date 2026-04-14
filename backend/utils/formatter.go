@@ -40,7 +40,7 @@ func PrintDOMTree(node *models.DOMNode, prefix string, isLast bool) {
 }
 
 func PrintTree(root *models.DOMNode) {
-	fmt.Printf("<%s> (NodeID: %d)", root.Tag, root.NodeID)
+	fmt.Printf("<%s> (NodeID: %d)\n", root.Tag, root.NodeID)
 	for i, child := range root.Children {
 		PrintDOMTree(child, "", i == len(root.Children)-1)
 	}
