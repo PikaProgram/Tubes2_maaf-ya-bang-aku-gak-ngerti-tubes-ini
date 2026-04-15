@@ -13,6 +13,7 @@ func FetchHTMLPage(rawURL string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("invalid URL: %w", err)
 	}
+
 	if parsed.Scheme != "http" && parsed.Scheme != "https" {
 		return "", fmt.Errorf("unsupported scheme %q: only http and https are allowed", parsed.Scheme)
 	}

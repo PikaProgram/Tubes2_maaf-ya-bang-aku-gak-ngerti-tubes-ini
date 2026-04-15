@@ -3,13 +3,14 @@ package main
 import (
 	"backend/services"
 	"backend/services/parser"
+	"backend/services/search"
 	"backend/utils"
 	"fmt"
 	"log"
 )
 
 func main() {
-	targetURL := "https://google.com/"
+	targetURL := "https://google.com"
 
 	fmt.Println("Fetching:", targetURL)
 	rawHTML, err := services.FetchHTMLPage(targetURL)
@@ -25,7 +26,7 @@ func main() {
 
 	utils.PrintTree(root)
 
-	selector, err := parser.ParseCSSSelector("span#footer > p")
+	selector, err := parser.ParseCSSSelector("div")
 	if err != nil {
 		log.Fatal("Selector parse error:", err)
 	}
@@ -38,5 +39,33 @@ func main() {
 			fmt.Printf(", Attr{Name=%q, Operator='%s', Value=%q}", attr.Name, attr.Operator, attr.Value)
 		}
 		fmt.Println()
+	}
+
+	searchResult, searchLog := search.SearchElementDFS(root, &selector)
+
+	fmt.Printf("Found %d matching element(s) with DFS:\n", len(searchResult.NodeIDs))
+	fmt.Printf("Matching NodeIDs: %v\n", searchResult.NodeIDs)
+	for _, nodeID := range searchResult.NodeIDs {
+		res := searchResult.Results[nodeID]
+		fmt.Printf("- NodeID: %d, Tag: <%s>, Path: %v\n", res.Node.NodeID, res.Node.Tag, res.Path)
+	}
+
+	fmt.Printf("Search Log (DFS):\n")
+	for _, entry := range searchLog.Entries {
+		fmt.Printf("  - NodeID: %d, Depth: %d\n", entry.NodeID, entry.Depth)
+	}
+
+	searchResultBFS, searchLogBFS := search.SearchElementBFS(root, &selector)
+
+	fmt.Printf("Found %d matching element(s) with BFS:\n", len(searchResultBFS.NodeIDs))
+	fmt.Printf("Matching NodeIDs: %v\n", searchResultBFS.NodeIDs)
+	for _, nodeID := range searchResultBFS.NodeIDs {
+		res := searchResultBFS.Results[nodeID]
+		fmt.Printf("- NodeID: %d, Tag: <%s>, Path: %v\n", res.Node.NodeID, res.Node.Tag, res.Path)
+	}
+
+	fmt.Printf("Search Log (BFS):\n")
+	for _, entry := range searchLogBFS.Entries {
+		fmt.Printf("  - NodeID: %d, Depth: %d\n", entry.NodeID, entry.Depth)
 	}
 }

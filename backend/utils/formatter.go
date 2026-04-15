@@ -15,16 +15,12 @@ func PrintDOMTree(node *models.DOMNode, prefix string, isLast bool) {
 	var label strings.Builder
 	label.WriteString("<" + node.Tag + ">" + fmt.Sprintf(" (NodeID: %d)", node.NodeID))
 
-	for _, class := range node.Classes {
-		label.WriteString("." + class)
+	if node.Content != "" {
+		label.WriteString(" Content: '" + node.Content + "'")
 	}
-	if id, ok := node.Attributes["id"]; ok {
-		label.WriteString(fmt.Sprintf(" #%s", id))
-	}
-	for key, val := range node.Attributes {
-		if key != "id" && key != "class" {
-			label.WriteString(fmt.Sprintf(" [%s=%q]", key, val))
-		}
+
+	for key, value := range node.Attributes {
+		label.WriteString(fmt.Sprintf(" [%s=%q]", key, value))
 	}
 
 	fmt.Println(prefix + connector + label.String())

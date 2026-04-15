@@ -49,11 +49,6 @@ type Selector struct {
 	Steps []SelectorStep
 }
 
-type SelectorResult struct {
-	NodeID int
-	Path   []int
-}
-
 func (s *SelectorStep) Matches(node *DOMNode) bool {
 	if node == nil {
 		return false
@@ -107,17 +102,12 @@ func (s *SelectorStep) Matches(node *DOMNode) bool {
 		return false
 	}
 	for _, class := range s.Compound.Classes {
-		found := false
-		for _, nodeClass := range node.Classes {
-			if class == nodeClass {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(node.Classes, class)
 		if !found {
 			return false
 		}
 	}
+
 	for _, attr := range s.Compound.Attributes {
 		nodeAttrValue, exists := node.Attributes[attr.Name]
 		switch attr.Operator {
@@ -151,6 +141,7 @@ func (s *SelectorStep) Matches(node *DOMNode) bool {
 			}
 		}
 	}
+
 	return true
 }
 
@@ -162,15 +153,18 @@ func (c *CompoundSelector) Matches(node *DOMNode) bool {
 	if c.Tag != "" && c.Tag != node.Tag {
 		return false
 	}
+
 	if c.ID != "" && c.ID != node.ID {
 		return false
 	}
+
 	for _, class := range c.Classes {
 		found := slices.Contains(node.Classes, class)
 		if !found {
 			return false
 		}
 	}
+
 	for _, attr := range c.Attributes {
 		nodeAttrValue, exists := node.Attributes[attr.Name]
 		switch attr.Operator {
