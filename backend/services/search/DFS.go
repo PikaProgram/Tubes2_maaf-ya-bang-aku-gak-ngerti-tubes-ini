@@ -2,22 +2,30 @@ package search
 
 import "backend/models"
 
-func searchDFS(node *models.DOMNode, selector *models.Selector, stepIndex int, results *models.SearchResult, log *models.SearchLog) {
+func searchDFS(node *models.DOMNode, selector *models.Selector, stepIndex int, amount int, results *models.SearchResult, log *models.SearchLog) {
 	if len(selector.Steps) == 0 || stepIndex < 0 || stepIndex >= len(selector.Steps) {
+		return
+	}
+	if len(results.NodeIDs) >= amount {
 		return
 	}
 
 	if stepIndex == 0 {
-		traverse(node, func(node *models.DOMNode) {
-			matchElement(node, selector, 0, results, log)
+		traverse(node, func(node *models.DOMNode) bool {
+			if len(results.NodeIDs) >= amount {
+				return false
+			}
+
+			matchElement(node, selector, 0, amount, results, log)
+			return len(results.NodeIDs) < amount
 		})
 		return
 	}
 
-	matchElement(node, selector, stepIndex, results, log)
+	matchElement(node, selector, stepIndex, amount, results, log)
 }
 
-func SearchElementDFS(root *models.DOMNode, selector *models.Selector) (*models.SearchResult, *models.SearchLog) {
+func SearchElementDFS(root *models.DOMNode, selector *models.Selector, amount int) (*models.SearchResult, *models.SearchLog) {
 	if root == nil || selector == nil {
 		return nil, nil
 	}
@@ -33,15 +41,18 @@ func SearchElementDFS(root *models.DOMNode, selector *models.Selector) (*models.
 		Entries:    []models.SearchLogEntry{},
 	}
 
-	searchDFS(root, selector, 0, &results, &log)
+	searchDFS(root, selector, 0, amount, &results, &log)
 	return &results, &log
 }
 
-func matchElement(node *models.DOMNode, selector *models.Selector, stepIndex int, results *models.SearchResult, log *models.SearchLog) {
+func matchElement(node *models.DOMNode, selector *models.Selector, stepIndex int, amount int, results *models.SearchResult, log *models.SearchLog) {
 	if node == nil || selector == nil || results == nil {
 		return
 	}
 	if stepIndex < 0 || stepIndex >= len(selector.Steps) {
+		return
+	}
+	if len(results.NodeIDs) >= amount {
 		return
 	}
 
@@ -61,29 +72,42 @@ func matchElement(node *models.DOMNode, selector *models.Selector, stepIndex int
 			path = append([]int{current.NodeID}, path...)
 		}
 
-		(*results).Results[node.NodeID] = models.SelectorResult{
-			Node: node,
-			Path: path,
-		}
+		if _, exists := (*results).Results[node.NodeID]; !exists {
+			(*results).Results[node.NodeID] = models.SelectorResult{
+				Node: node,
+				Path: path,
+			}
 
-		(*results).NodeIDs = append((*results).NodeIDs, node.NodeID)
+			(*results).NodeIDs = append((*results).NodeIDs, node.NodeID)
+		}
 
 		return
 	}
 
 	nextStep := selector.Steps[stepIndex+1]
 	for _, candidate := range node.GetRelatedNodes(nextStep.Combinator) {
-		matchElement(candidate, selector, stepIndex+1, results, log)
+		if len(results.NodeIDs) >= amount {
+			return
+		}
+
+		matchElement(candidate, selector, stepIndex+1, amount, results, log)
 	}
 }
 
-func traverse(node *models.DOMNode, visit func(*models.DOMNode)) {
+func traverse(node *models.DOMNode, visit func(*models.DOMNode) bool) bool {
 	if node == nil || visit == nil {
-		return
+		return true
 	}
 
-	visit(node)
-	for _, child := range node.Children {
-		traverse(child, visit)
+	if !visit(node) {
+		return false
 	}
+
+	for _, child := range node.Children {
+		if !traverse(child, visit) {
+			return false
+		}
+	}
+
+	return true
 }

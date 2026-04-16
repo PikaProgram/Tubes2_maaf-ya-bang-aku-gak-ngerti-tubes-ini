@@ -7,7 +7,7 @@ type QueueItem struct {
 	StepIndex int
 }
 
-func SearchElementBFS(root *models.DOMNode, selector *models.Selector) (*models.SearchResult, *models.SearchLog) {
+func SearchElementBFS(root *models.DOMNode, selector *models.Selector, amount int) (*models.SearchResult, *models.SearchLog) {
 	if root == nil || selector == nil {
 		return nil, nil
 	}
@@ -25,7 +25,7 @@ func SearchElementBFS(root *models.DOMNode, selector *models.Selector) (*models.
 
 	queue := []QueueItem{{Node: root, StepIndex: 0}}
 
-	for len(queue) > 0 {
+	for len(queue) > 0 && len(results.NodeIDs) < amount {
 		currentItem := queue[0]
 		queue = queue[1:]
 
@@ -49,15 +49,21 @@ func SearchElementBFS(root *models.DOMNode, selector *models.Selector) (*models.
 					path = append([]int{current.NodeID}, path...)
 				}
 
-				results.Results[currentNode.NodeID] = models.SelectorResult{
-					Node: currentNode,
-					Path: path,
-				}
+				if _, exists := results.Results[currentNode.NodeID]; !exists {
+					results.Results[currentNode.NodeID] = models.SelectorResult{
+						Node: currentNode,
+						Path: path,
+					}
 
-				results.NodeIDs = append(results.NodeIDs, currentNode.NodeID)
+					results.NodeIDs = append(results.NodeIDs, currentNode.NodeID)
+				}
 			} else {
 				relatedNodes := currentNode.GetRelatedNodes(selector.Steps[currentStepIndex+1].Combinator)
 				for _, relatedNode := range relatedNodes {
+					if len(results.NodeIDs) >= amount {
+						break
+					}
+
 					queue = append(queue, QueueItem{Node: relatedNode, StepIndex: currentStepIndex + 1})
 				}
 			}
