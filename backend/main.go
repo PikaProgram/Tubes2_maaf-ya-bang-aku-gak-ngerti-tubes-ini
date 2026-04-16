@@ -1,71 +1,83 @@
 package main
 
 import (
+	"backend/models"
 	"backend/services"
 	"backend/services/parser"
 	"backend/services/search"
-	"backend/utils"
-	"fmt"
 	"log"
+
+	"github.com/gofiber/fiber/v3"
 )
 
 func main() {
-	targetURL := "https://google.com"
+	app := fiber.New()
 
-	fmt.Println("Fetching:", targetURL)
-	rawHTML, err := services.FetchHTMLPage(targetURL)
-	if err != nil {
-		log.Fatal("Scraper error:", err)
-	}
-	fmt.Printf("Fetched %d bytes\n\n", len(rawHTML))
-
-	root, err := parser.ParseHTML(rawHTML)
-	if err != nil {
-		log.Fatal("Parser error:", err)
-	}
-
-	utils.PrintTree(root)
-
-	selector, err := parser.ParseCSSSelector("div")
-	if err != nil {
-		log.Fatal("Selector parse error:", err)
-	}
-	fmt.Printf("Parsed selector with %d step(s)\n", len(selector.Steps))
-
-	for i, step := range selector.Steps {
-		fmt.Printf("Step %d: Combinator='%s', Tag=%q, ID=%q, Classes=%v",
-			i+1, step.Combinator, step.Compound.Tag, step.Compound.ID, step.Compound.Classes)
-		for _, attr := range step.Compound.Attributes {
-			fmt.Printf(", Attr{Name=%q, Operator='%s', Value=%q}", attr.Name, attr.Operator, attr.Value)
+	app.Post("/", func(c fiber.Ctx) error {
+		if !c.HasBody() {
+			return c.SendStatus(fiber.StatusBadRequest)
 		}
-		fmt.Println()
-	}
 
-	searchResult, searchLog := search.SearchElementDFS(root, &selector)
+		req := new(models.Request)
 
-	fmt.Printf("Found %d matching element(s) with DFS:\n", len(searchResult.NodeIDs))
-	fmt.Printf("Matching NodeIDs: %v\n", searchResult.NodeIDs)
-	for _, nodeID := range searchResult.NodeIDs {
-		res := searchResult.Results[nodeID]
-		fmt.Printf("- NodeID: %d, Tag: <%s>, Path: %v\n", res.Node.NodeID, res.Node.Tag, res.Path)
-	}
+		if err := c.Bind().JSON(req); err != nil {
+			return c.SendStatus(fiber.StatusBadRequest)
+		}
 
-	fmt.Printf("Search Log (DFS):\n")
-	for _, entry := range searchLog.Entries {
-		fmt.Printf("  - NodeID: %d, Depth: %d\n", entry.NodeID, entry.Depth)
-	}
+		if req.URL == "" || req.Type == "" || req.Amount < 0 {
+			return c.SendStatus(fiber.StatusBadRequest)
+		}
 
-	searchResultBFS, searchLogBFS := search.SearchElementBFS(root, &selector)
+		if req.Type != "DFS" && req.Type != "BFS" {
+			return c.SendStatus(fiber.StatusBadRequest)
+		}
 
-	fmt.Printf("Found %d matching element(s) with BFS:\n", len(searchResultBFS.NodeIDs))
-	fmt.Printf("Matching NodeIDs: %v\n", searchResultBFS.NodeIDs)
-	for _, nodeID := range searchResultBFS.NodeIDs {
-		res := searchResultBFS.Results[nodeID]
-		fmt.Printf("- NodeID: %d, Tag: <%s>, Path: %v\n", res.Node.NodeID, res.Node.Tag, res.Path)
-	}
+		if req.Type == "DFS" {
+			log.Println("DFS request received: URL=%s, Amount=%d, Selector=%s\n", req.URL, req.Amount, req.Selector)
 
-	fmt.Printf("Search Log (BFS):\n")
-	for _, entry := range searchLogBFS.Entries {
-		fmt.Printf("  - NodeID: %d, Depth: %d\n", entry.NodeID, entry.Depth)
-	}
+			rawHTML, err := services.FetchHTMLPage(req.URL)
+
+			if err != nil {
+				log.Println("Error fetching HTML page: %v\n", err)
+				return c.SendStatus(fiber.StatusInternalServerError)
+			}
+
+			DOMTree, err := parser.ParseHTML(rawHTML)
+
+			if err != nil {
+				log.Println("Error parsing HTML: %v\n", err)
+				return c.SendStatus(fiber.StatusInternalServerError)
+			}
+
+			if req.Selector == "" {
+				log.Println("No selector provided for DFS search\n")
+				return c.SendStatus(fiber.StatusBadRequest)
+			}
+
+			sel, err := parser.ParseCSSSelector(req.Selector)
+
+			if err != nil {
+				log.Println("Error parsing CSS selector: %v\n", err)
+				return c.SendStatus(fiber.StatusBadRequest)
+			}
+
+			res, searchlog := search.SearchElementDFS(DOMTree, &sel, req.Amount)
+
+			log.Printf("DFS search result: %v\n", res)
+			log.Printf("DFS search log: %v\n", searchlog)
+
+			return c.JSON(map[string]interface{}{
+				"result": res.Serialize(),
+				"log":    searchlog.Serialize(),
+			})
+
+		} else {
+			log.Printf("BFS request received: URL=%s, Amount=%d\n", req.URL, req.Amount)
+			return c.SendStatus(fiber.StatusOK)
+
+		}
+
+	})
+
+	log.Fatal(app.Listen(":6767"))
 }

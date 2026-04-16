@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 )
@@ -199,4 +200,43 @@ func (c *CompoundSelector) Matches(node *DOMNode) bool {
 		}
 	}
 	return true
+}
+
+func (s *Selector) String() string {
+	var parts []string
+	for _, step := range s.Steps {
+		var part string
+		if step.Combinator != CombinatorNone {
+			part += string(step.Combinator)
+		}
+		if step.Compound.Tag != "" {
+			part += step.Compound.Tag
+		}
+		if step.Compound.ID != "" {
+			part += "#" + step.Compound.ID
+		}
+		for _, class := range step.Compound.Classes {
+			part += "." + class
+		}
+		for _, attr := range step.Compound.Attributes {
+			switch attr.Operator {
+			case AttrOperatorExists:
+				part += fmt.Sprintf("[%s]", attr.Name)
+			case AttrOperatorEquals:
+				part += fmt.Sprintf("[%s=\"%s\"]", attr.Name, attr.Value)
+			case AttrOperatorIncludes:
+				part += fmt.Sprintf("[%s~=\"%s\"]", attr.Name, attr.Value)
+			case AttrOperatorDashMatch:
+				part += fmt.Sprintf("[%s|=\"%s\"]", attr.Name, attr.Value)
+			case AttrOperatorPrefixMatch:
+				part += fmt.Sprintf("[%s^=\"%s\"]", attr.Name, attr.Value)
+			case AttrOperatorSuffixMatch:
+				part += fmt.Sprintf("[%s$=\"%s\"]", attr.Name, attr.Value)
+			case AttrOperatorSubstringMatch:
+				part += fmt.Sprintf("[%s*=\"%s\"]", attr.Name, attr.Value)
+			}
+		}
+		parts = append(parts, part)
+	}
+	return strings.Join(parts, "")
 }
