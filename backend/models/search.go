@@ -41,12 +41,9 @@ func (res *SearchResult) Serialize() map[int]interface{} {
 }
 
 func (log *SearchLog) Serialize() map[string]interface{} {
-	entries := make([]map[string]interface{}, len(log.Entries))
+	entries := make([]int, len(log.Entries))
 	for i, entry := range log.Entries {
-		entries[i] = map[string]interface{}{
-			"NodeID": entry.NodeID,
-			"Depth":  entry.Depth,
-		}
+		entries[i] = entry.NodeID
 	}
 	return map[string]interface{}{
 		"Selector":   log.Selector.String(),

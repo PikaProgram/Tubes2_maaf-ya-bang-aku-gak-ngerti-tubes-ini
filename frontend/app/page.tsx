@@ -1,65 +1,194 @@
-import Image from "next/image";
+"use client";
+
+import { ChevronRight, Globe, Plus, Search, Zap } from "lucide-react";
+import { motion } from "motion/react";
+import React from "react";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <div className="min-h-screen flex flex-col md:flex-row selection:bg-primary selection:text-on-primary">
+      {/* Global Overlays */}
+      <div className="fixed inset-0 scanline-overlay z-100 pointer-events-none" />
+
+      <HomeSidebar />
+
+      <main className="flex-1 min-h-screen flex flex-col relative z-10">
+        <Hero />
       </main>
     </div>
+  )
+}
+
+function HomeSidebar() {
+  const [formData, setFormData] = React.useState({
+    url: "",
+    selector: "",
+    amount: 0,
+    method: "DFS"
+  });
+
+  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!formData.url || !formData.selector) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+  }
+
+  return (
+    <aside className="w-sm h-screen flex flex-col bg-background border-r border-primary/20 font-sans uppercase tracking-wider text-md">
+      <div className="p-4 pb-4">
+        <motion.span
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-primary font-black italic text-xl tracking-tighter"
+        >
+          TRAVERSAL_CONFIG
+        </motion.span>
+        <div className="text-on-surface-variant mt-1 font-mono uppercase text-sm">
+          maaf_ya_bang_aku_gak_ngerti_tubes_ini
+        </div>
+      </div>
+
+      <form action="#" onSubmit={handleSubmit} className="flex-1 px-8 py-4 space-y-8 overflow-y-auto">
+        {/* URL Input */}
+        <div className="space-y-3">
+          <label className="flex items-center text-primary/60 font-black gap-2">
+            <Globe className="w-4 h-4" />
+            Target_URL
+          </label>
+        </div>
+        <div className="relative group">
+          <div className="absolute left-0 bottom-0 w-2 h-2 border-l-2 border-b-2 border-primary" />
+          <div className="absolute right-0 top-0 w-2 h-2 border-r-2 border-t-2 border-primary" />
+          <input
+            type="text"
+            name="url"
+            placeholder="Enter URL"
+            className="w-full bg-surface-container/50 border-none p-3 text-primary-dim focus:ring-0 font-mono text-[1em] placeholder:text-primary/20"
+            value={formData.url}
+            onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+          />
+        </div>
+
+        {/* CSS Selector Input */}
+        <div className="space-y-3">
+          <label className="flex items-center text-primary/60 font-black gap-2">
+            <Search className="w-4 h-4" />
+            CSS_Selector
+          </label>
+        </div>
+        <div className="relative group">
+          <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-primary" />
+          <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-primary" />
+          <input
+            type="text"
+            name="selector"
+            id=""
+            placeholder="Enter CSS Selector"
+            className="w-full bg-surface-container/50 border-none p-3 text-primary-dim focus:ring-0 font-mono text-[1em] placeholder:text-primary/20"
+            value={formData.selector}
+            onChange={(e) => setFormData({ ...formData, selector: e.target.value })}
+          />
+        </div>
+
+        {/* Amount Input */}
+        <div className="space-y-3">
+          <label className="flex items-center text-primary/60 font-black gap-2">
+            <Plus className="w-4 h-4" />
+            Amount
+          </label>
+        </div>
+        <div className="relative group">
+          <div className="absolute left-0 bottom-0 w-2 h-2 border-l-2 border-b-2 border-primary" />
+          <div className="absolute right-0 top-0 w-2 h-2 border-r-2 border-t-2 border-primary" />
+          <input
+            type="number"
+            name="amount"
+            id=""
+            placeholder="Enter Amount (0 for all)"
+            className="w-full bg-surface-container/50 border-none p-3 text-primary-dim focus:ring-0 font-mono text-[1em] placeholder:text-primary/20"
+            // value={formData.amount}
+            onChange={(e) => setFormData({ ...formData, amount: parseInt(e.target.value) || 0 })}
+          />
+        </div>
+
+        {/* Traversal Mode */}
+        <div className="space-y-4">
+          <label className="flex items-center text-primary/60 font-black gap-2">
+            <Zap className="w-4 h-4" />
+            Traversal_Mode
+          </label>
+          <div className="flex items-center justify-between p-3 bg-surface-container/30 border border-outline-variant/20">
+            <span className={`transition-colors ${formData.method !== "BFS" ? "text-primary font-black" : "text-on-surface-variant"}`}>DFS</span>
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, method: formData.method === "DFS" ? "BFS" : "DFS" })}
+              className="relative w-12 h-6 bg-surface-container-highest rounded-full p-1 transition-colors group"
+            >
+              <motion.div
+                animate={{ x: formData.method === "BFS" ? 24 : 0 }}
+                className={`w-4 h-4 rounded-full ${formData.method === "BFS" ? "bg-secondary" : "bg-primary"} shadow-[0_0_32px_rgba(100,240,255,0.5)]`}
+              />
+            </button>
+            <span className={`transition-colors ${formData.method === "BFS" ? "text-secondary font-black" : "text-on-surface-variant"}`}>BFS</span>
+          </div>
+        </div>
+      </form>
+
+      {/* Initialize Traversal Button */}
+      <div className="p-8 mt-auto border-t border-primary/10 bg-surface/50">
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          whileHover={{ scaleX: 1.05, scaleY: 1.02, boxShadow: "0 0 2em rgba(100,240,255,0.7)" }}
+          className="w-full bg-primary text-on-primary font-black py-4 clip-corner text-xs tracking-[0.5em] flex items-center justify-center gap-2"
+        >
+          <ChevronRight className="w-4 h-4" />
+          OKE_GAS OKE_GAS
+          <ChevronRight className="w-4 h-4" />
+        </motion.button>
+      </div>
+
+    </aside>
   );
+}
+
+function Hero() {
+  const randomPhrases = [
+    "Extend Deadlinenya Dong Bang",
+    "Tolong ini kudu diapain",
+    "Mengapa aku informatika"
+  ];
+
+  const randomPhrase = randomPhrases[Math.floor(Math.random() * randomPhrases.length)];
+
+  return (
+    <section className="relative min-h-screen flex flex-col justify-center overflow-hidden px-16">
+      <div className="max-w-4xl z-20">
+        <motion.h1
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+          className="text-8xl font-black text-white mb-8 leading-[0.9] tracking-tighter uppercase max-w-full"
+        >
+          Bang Fariz Tolong <br />
+          <span className="text-primary italic drop-shadow-[0_0_32px_rgba(100,240,255,0.5)]">
+            {randomPhrase}
+          </span>
+        </motion.h1>
+      </div>
+
+      <div className="absolute right-[-10%] w-4xl h-4xl opacity-30 mix-blend-screen pointer-events-none">
+        <motion.img
+          animate={{ rotate: 360 }}
+          transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+          src="https://picsum.photos/seed/fariz-rifki/1000/1000"
+          alt="Holographic visualization"
+          className="w-full h-full object-contain filter hue-rotate-180 brightness-150 rounded-full"
+          referrerPolicy="no-referrer"
+        />
+      </div>
+    </section>
+  )
 }
