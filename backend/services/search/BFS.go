@@ -25,6 +25,10 @@ func SearchElementBFS(root *models.DOMNode, selector *models.Selector, amount in
 
 	queue := []QueueItem{{Node: root, StepIndex: 0}}
 
+	if amount <= 0 {
+		amount = int(^uint(0) >> 1)
+	}
+
 	for len(queue) > 0 && len(results.NodeIDs) < amount {
 		currentItem := queue[0]
 		queue = queue[1:]

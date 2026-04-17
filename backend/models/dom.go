@@ -78,3 +78,27 @@ func (node *DOMNode) GetRelatedNodes(combinator Combinator) []*DOMNode {
 		return node.FlattenChildren()
 	}
 }
+
+func (node *DOMNode) Serialize() map[string]interface{} {
+	serialized := map[string]interface{}{
+		"nodeID":     node.NodeID,
+		"tag":        node.Tag,
+		"id":         node.ID,
+		"classes":    node.Classes,
+		"attributes": node.Attributes,
+		"content":    node.Content,
+		"depth":      node.Depth,
+	}
+
+	if len(node.Children) > 0 {
+		children := make([]map[string]interface{}, len(node.Children))
+		for i, child := range node.Children {
+			children[i] = child.Serialize()
+		}
+		serialized["children"] = children
+	} else {
+		serialized["children"] = []map[string]interface{}{}
+	}
+
+	return serialized
+}

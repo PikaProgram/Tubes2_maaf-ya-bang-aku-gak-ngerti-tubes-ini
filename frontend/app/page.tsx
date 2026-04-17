@@ -2,7 +2,16 @@
 
 import { ChevronRight, Globe, Plus, Search, Zap } from "lucide-react";
 import { motion } from "motion/react";
+import { useRouter } from "next/navigation";
 import React from "react";
+import {
+  TraversalApiErrorResponse,
+  TraversalApiResponse,
+  TraversalMethod,
+  TraversalRequestPayload,
+} from "@/types/traversal";
+
+const TRAVERSAL_API_URL = process.env.API_URL || "http://127.0.0.1:6767";
 
 export default function Home() {
   return (
@@ -20,20 +29,70 @@ export default function Home() {
 }
 
 function HomeSidebar() {
+  const router = useRouter();
   const [formData, setFormData] = React.useState({
     url: "",
     selector: "",
     amount: 0,
-    method: "DFS"
+    method: "DFS" as TraversalMethod,
   });
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
 
-  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!formData.url || !formData.selector) {
-      alert("Please fill in all required fields.");
+    if (isSubmitting) {
       return;
     }
+
+    if (!formData.url.trim() || !formData.selector.trim()) {
+      setSubmitError("URL and CSS selector are required.");
+      return;
+    }
+
+    const payload: TraversalRequestPayload = {
+      url: formData.url.trim(),
+      selector: formData.selector.trim(),
+      amount: formData.amount,
+      type: formData.method,
+    };
+
+    try {
+      setIsSubmitting(true);
+      setSubmitError(null);
+
+      const response = await fetch(TRAVERSAL_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const maybeError = await response.json().catch(() => null) as TraversalApiErrorResponse | null;
+        const fieldPrefix = maybeError?.field ? `${maybeError.field}: ` : "";
+        throw new Error(`${fieldPrefix}${maybeError?.error ?? `Request failed (${response.status})`}`);
+      }
+
+      const result = (await response.json()) as TraversalApiResponse;
+
+      sessionStorage.setItem("traversal:request", JSON.stringify(payload));
+      sessionStorage.setItem("traversal:response", JSON.stringify(result));
+
+      router.push("/visualizer");
+    } catch (error) {
+      if (error instanceof Error) {
+        setSubmitError(error.message);
+      } else {
+        setSubmitError("Failed to submit traversal request.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+
+
   }
 
   return (
@@ -51,7 +110,7 @@ function HomeSidebar() {
         </div>
       </div>
 
-      <form action="#" onSubmit={handleSubmit} className="flex-1 px-8 py-4 space-y-8 overflow-y-auto">
+      <form id="traversal-form" action="#" onSubmit={handleSubmit} className="flex-1 px-8 py-4 space-y-8 overflow-y-auto">
         {/* URL Input */}
         <div className="space-y-3">
           <label className="flex items-center text-primary/60 font-black gap-2">
@@ -65,6 +124,7 @@ function HomeSidebar() {
           <input
             type="text"
             name="url"
+            required={true}
             placeholder="Enter URL"
             className="w-full bg-surface-container/50 border-none p-3 text-primary-dim focus:ring-0 font-mono text-[1em] placeholder:text-primary/20"
             value={formData.url}
@@ -85,7 +145,7 @@ function HomeSidebar() {
           <input
             type="text"
             name="selector"
-            id=""
+            required={true}
             placeholder="Enter CSS Selector"
             className="w-full bg-surface-container/50 border-none p-3 text-primary-dim focus:ring-0 font-mono text-[1em] placeholder:text-primary/20"
             value={formData.selector}
@@ -106,7 +166,6 @@ function HomeSidebar() {
           <input
             type="number"
             name="amount"
-            id=""
             placeholder="Enter Amount (0 for all)"
             className="w-full bg-surface-container/50 border-none p-3 text-primary-dim focus:ring-0 font-mono text-[1em] placeholder:text-primary/20"
             // value={formData.amount}
@@ -135,21 +194,29 @@ function HomeSidebar() {
             <span className={`transition-colors ${formData.method === "BFS" ? "text-secondary font-black" : "text-on-surface-variant"}`}>BFS</span>
           </div>
         </div>
+
       </form>
 
       {/* Initialize Traversal Button */}
       <div className="p-8 mt-auto border-t border-primary/10 bg-surface/50">
         <motion.button
+          type="submit"
+          form="traversal-form"
+          disabled={isSubmitting}
           whileTap={{ scale: 0.95 }}
           whileHover={{ scaleX: 1.05, scaleY: 1.02, boxShadow: "0 0 2em rgba(100,240,255,0.7)" }}
-          className="w-full bg-primary text-on-primary font-black py-4 clip-corner text-xs tracking-[0.5em] flex items-center justify-center gap-2"
+          className="w-full bg-primary text-on-primary font-black py-4 clip-corner text-xs tracking-[0.5em] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
         >
           <ChevronRight className="w-4 h-4" />
-          OKE_GAS OKE_GAS
+          {isSubmitting ? "SUBMITTING..." : "OKE_GAS OKE_GAS"}
           <ChevronRight className="w-4 h-4" />
         </motion.button>
+        {submitError && (
+          <p className="mt-4 text-sm text-error font-mono normal-case tracking-normal">
+            {submitError}
+          </p>
+        )}
       </div>
-
     </aside>
   );
 }

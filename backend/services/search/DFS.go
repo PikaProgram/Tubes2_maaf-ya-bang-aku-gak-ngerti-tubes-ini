@@ -30,6 +30,10 @@ func SearchElementDFS(root *models.DOMNode, selector *models.Selector, amount in
 		return nil, nil
 	}
 
+	if amount <= 0 {
+		amount = int(^uint(0) >> 1)
+	}
+
 	results := models.SearchResult{
 		NodeIDs: []int{},
 		Results: make(map[int]models.SelectorResult),

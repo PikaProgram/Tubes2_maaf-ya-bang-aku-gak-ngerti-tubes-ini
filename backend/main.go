@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/cors"
 )
 
 type structValidator struct {
@@ -25,6 +26,12 @@ func main() {
 			validate: validator.New(),
 		},
 	})
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{"GET", "POST", "OPTIONS"},
+		AllowHeaders: []string{"Origin", "Content-Type", "Accept"},
+	}))
 
 	app.Post("/", func(c fiber.Ctx) error {
 		if !c.HasBody() {
@@ -83,8 +90,9 @@ func main() {
 			log.Printf("DFS search log: %v\n", searchlog)
 
 			return c.JSON(map[string]interface{}{
-				"result": res.Serialize(),
-				"log":    searchlog.Serialize(),
+				"DOMTree": DOMTree.Serialize(),
+				"result":  res.Serialize(),
+				"log":     searchlog.Serialize(),
 			})
 
 		} else {
@@ -96,8 +104,9 @@ func main() {
 			log.Printf("BFS search log: %v\n", searchlog)
 
 			return c.JSON(map[string]interface{}{
-				"result": res.Serialize(),
-				"log":    searchlog.Serialize(),
+				"DOMTree": DOMTree.Serialize(),
+				"result":  res.Serialize(),
+				"log":     searchlog.Serialize(),
 			})
 		}
 
