@@ -15,7 +15,7 @@ const TRAVERSAL_API_URL = process.env.API_URL || "http://127.0.0.1:6767";
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col md:flex-row selection:bg-primary selection:text-on-primary">
+    <div className="min-h-screen flex flex-col selection:bg-primary selection:text-on-primary">
       {/* Global Overlays */}
       <div className="fixed inset-0 scanline-overlay z-100 pointer-events-none" />
 
@@ -168,7 +168,6 @@ function HomeSidebar() {
             name="amount"
             placeholder="Enter Amount (0 for all)"
             className="w-full bg-surface-container/50 border-none p-3 text-primary-dim focus:ring-0 font-mono text-[1em] placeholder:text-primary/20"
-            // value={formData.amount}
             onChange={(e) => setFormData({ ...formData, amount: parseInt(e.target.value) || 0 })}
           />
         </div>
@@ -222,13 +221,17 @@ function HomeSidebar() {
 }
 
 function Hero() {
-  const randomPhrases = [
-    "Extend Deadlinenya Dong Bang",
-    "Tolong ini kudu diapain",
-    "Mengapa aku informatika"
-  ];
+  const [randomPhrase, setRandomPhrase] = React.useState("");
 
-  const randomPhrase = randomPhrases[Math.floor(Math.random() * randomPhrases.length)];
+  React.useEffect(() => {
+    const randomPhrases = [
+      "Extend Deadlinenya Dong Bang",
+      "Tolong ini kudu diapain",
+      "Mengapa aku informatika"
+    ];
+
+    setRandomPhrase(randomPhrases[Math.floor(Math.random() * randomPhrases.length)]);
+  }, []);
 
   return (
     <section className="relative min-h-screen flex flex-col justify-center overflow-hidden px-16">

@@ -36,7 +36,14 @@ export type SerializedSelectorResult = {
 export type SerializedSearchLog = {
   Selector: string;
   SearchType: TraversalMethod;
-  Entries: number[];
+  Entries: SerializedSearchLogEntry[];
+};
+
+export type SerializedSearchLogEntry = {
+  NodeID: number;
+  Depth: number;
+  CandidateNode: boolean;
+  SelectedNode: boolean;
 };
 
 export type TraversalApiResponse = {
