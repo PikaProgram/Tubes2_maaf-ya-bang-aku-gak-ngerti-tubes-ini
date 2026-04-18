@@ -86,9 +86,6 @@ func main() {
 
 			res, searchlog := search.SearchElementDFS(DOMTree, &sel, req.Amount)
 
-			log.Printf("DFS search result: %v\n", res)
-			log.Printf("DFS search log: %v\n", searchlog)
-
 			return c.JSON(map[string]interface{}{
 				"DOMTree": DOMTree.Serialize(),
 				"result":  res.Serialize(),
@@ -99,9 +96,6 @@ func main() {
 			log.Printf("BFS request received: URL=%s, Amount=%d, Selector=%s\n", req.URL, req.Amount, req.Selector)
 
 			res, searchlog := search.SearchElementBFS(DOMTree, &sel, req.Amount)
-
-			log.Printf("BFS search result: %v\n", res)
-			log.Printf("BFS search log: %v\n", searchlog)
 
 			return c.JSON(map[string]interface{}{
 				"DOMTree": DOMTree.Serialize(),

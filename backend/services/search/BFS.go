@@ -1,10 +1,14 @@
 package search
 
-import "backend/models"
+import (
+	"backend/models"
+	"sort"
+)
 
 type QueueItem struct {
 	Node      *models.DOMNode
 	StepIndex int
+	Order     int
 }
 
 func SearchElementBFS(root *models.DOMNode, selector *models.Selector, amount int) (*models.SearchResult, *models.SearchLog) {
@@ -23,13 +27,41 @@ func SearchElementBFS(root *models.DOMNode, selector *models.Selector, amount in
 		Entries:    []models.SearchLogEntry{},
 	}
 
-	queue := []QueueItem{{Node: root, StepIndex: 0}}
+	queue := []QueueItem{}
+	enqueueOrder := 0
+	enqueue := func(node *models.DOMNode, stepIndex int) {
+		queue = append(queue, QueueItem{Node: node, StepIndex: stepIndex, Order: enqueueOrder})
+		enqueueOrder++
+	}
+
+	enqueue(root, 0)
 
 	if amount <= 0 {
 		amount = int(^uint(0) >> 1)
 	}
 
 	for len(queue) > 0 && len(results.NodeIDs) < amount {
+		sort.SliceStable(queue, func(i, j int) bool {
+			leftItem := queue[i]
+			rightItem := queue[j]
+
+			l := int(^uint(0) >> 1)
+			r := int(^uint(0) >> 1)
+
+			if leftItem.Node != nil {
+				l = leftItem.Node.Depth
+			}
+			if rightItem.Node != nil {
+				r = rightItem.Node.Depth
+			}
+
+			if l != r {
+				return l < r
+			}
+
+			return leftItem.Order < rightItem.Order
+		})
+
 		currentItem := queue[0]
 		queue = queue[1:]
 
@@ -40,12 +72,21 @@ func SearchElementBFS(root *models.DOMNode, selector *models.Selector, amount in
 			continue
 		}
 
-		log.Entries = append(log.Entries, models.SearchLogEntry{
-			NodeID: currentNode.NodeID,
-			Depth:  currentNode.Depth,
-		})
+		logEntry := models.SearchLogEntry{
+			NodeID:        currentNode.NodeID,
+			Depth:         currentNode.Depth,
+			CandidateNode: selector.Steps[currentStepIndex].Compound.Matches(currentNode),
+			SelectedNode:  selector.Steps[currentStepIndex].Compound.Matches(currentNode) && currentStepIndex == len(selector.Steps)-1,
+		}
+
+		log.UpsertLogEntry(logEntry)
 
 		step := selector.Steps[currentStepIndex]
+
+		for _, child := range currentNode.Children {
+			enqueue(child, currentStepIndex)
+		}
+
 		if step.Compound.Matches(currentNode) {
 			if currentStepIndex == len(selector.Steps)-1 {
 				path := make([]int, 0, currentNode.Depth+1)
@@ -62,19 +103,26 @@ func SearchElementBFS(root *models.DOMNode, selector *models.Selector, amount in
 					results.NodeIDs = append(results.NodeIDs, currentNode.NodeID)
 				}
 			} else {
-				relatedNodes := currentNode.GetRelatedNodes(selector.Steps[currentStepIndex+1].Combinator)
+				nextCombinator := selector.Steps[currentStepIndex+1].Combinator
+				relatedNodes := currentNode.GetRelatedNodes(nextCombinator)
+
+				if nextCombinator == models.CombinatorDescendant || nextCombinator == models.CombinatorNone {
+					sort.SliceStable(relatedNodes, func(i, j int) bool {
+						if relatedNodes[i].Depth != relatedNodes[j].Depth {
+							return relatedNodes[i].Depth < relatedNodes[j].Depth
+						}
+						return relatedNodes[i].NodeID < relatedNodes[j].NodeID
+					})
+				}
+
 				for _, relatedNode := range relatedNodes {
 					if len(results.NodeIDs) >= amount {
 						break
 					}
 
-					queue = append(queue, QueueItem{Node: relatedNode, StepIndex: currentStepIndex + 1})
+					enqueue(relatedNode, currentStepIndex+1)
 				}
 			}
-		}
-
-		for _, child := range currentNode.Children {
-			queue = append(queue, QueueItem{Node: child, StepIndex: currentStepIndex})
 		}
 	}
 

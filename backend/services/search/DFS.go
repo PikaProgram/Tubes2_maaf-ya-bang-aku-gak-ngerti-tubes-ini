@@ -60,9 +60,13 @@ func matchElement(node *models.DOMNode, selector *models.Selector, stepIndex int
 		return
 	}
 
-	log.Entries = append(log.Entries, models.SearchLogEntry{
-		NodeID: node.NodeID,
-		Depth:  node.Depth,
+	isCandidate := selector.Steps[stepIndex].Compound.Matches(node)
+
+	log.UpsertLogEntry(models.SearchLogEntry{
+		NodeID:        node.NodeID,
+		Depth:         node.Depth,
+		CandidateNode: isCandidate,
+		SelectedNode:  isCandidate && stepIndex == len(selector.Steps)-1,
 	})
 
 	step := selector.Steps[stepIndex]

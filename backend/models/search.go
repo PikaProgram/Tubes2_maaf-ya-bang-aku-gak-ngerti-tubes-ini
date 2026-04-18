@@ -17,8 +17,10 @@ type SearchLog struct {
 }
 
 type SearchLogEntry struct {
-	NodeID int
-	Depth  int
+	NodeID        int
+	Depth         int
+	CandidateNode bool
+	SelectedNode  bool
 }
 
 func (res *SearchResult) Serialize() map[int]interface{} {
@@ -41,13 +43,41 @@ func (res *SearchResult) Serialize() map[int]interface{} {
 }
 
 func (log *SearchLog) Serialize() map[string]interface{} {
-	entries := make([]int, len(log.Entries))
+	entries := make([]interface{}, len(log.Entries))
 	for i, entry := range log.Entries {
-		entries[i] = entry.NodeID
+		entries[i] = map[string]interface{}{
+			"NodeID":        entry.NodeID,
+			"Depth":         entry.Depth,
+			"CandidateNode": entry.CandidateNode,
+			"SelectedNode":  entry.SelectedNode,
+		}
 	}
 	return map[string]interface{}{
 		"Selector":   log.Selector.String(),
 		"SearchType": log.SearchType,
 		"Entries":    entries,
 	}
+}
+
+func (log *SearchLog) UpsertLogEntry(entry SearchLogEntry) {
+	if log == nil {
+		return
+	}
+
+	for i := range log.Entries {
+		if log.Entries[i].NodeID != entry.NodeID {
+			continue
+		}
+
+		if entry.CandidateNode {
+			log.Entries[i].CandidateNode = true
+		}
+		if entry.SelectedNode {
+			log.Entries[i].SelectedNode = true
+		}
+
+		return
+	}
+
+	log.Entries = append(log.Entries, entry)
 }
