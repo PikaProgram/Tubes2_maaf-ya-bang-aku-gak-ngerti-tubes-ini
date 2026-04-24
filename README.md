@@ -13,16 +13,12 @@ Implementasi BFS melakukan penelusuran level demi level menggunakan queue.
 - Jika step belum terakhir, node-node relasi berikutnya (berdasarkan combinator selector) dimasukkan ke queue.
 - Traversal berhenti ketika jumlah hasil (`amount`) terpenuhi atau queue habis.
 
-Karakteristik utama: eksplorasi merata per kedalaman (level-order).
-
 ### DFS (Depth-First Search)
 Implementasi DFS menggunakan rekursi untuk menelusuri sedalam mungkin pada cabang DOM.
 - Traversal awal menelusuri seluruh node secara depth-first.
 - Untuk node yang cocok, pencocokan step selector dilanjutkan rekursif ke kandidat relasi step berikutnya.
 - Jika step terakhir terpenuhi, node disimpan sebagai hasil.
 - Traversal berhenti ketika jumlah hasil (`amount`) terpenuhi.
-
-Karakteristik utama: menuntaskan cabang terlebih dahulu sebelum pindah ke cabang lain.
 
 ## Requirements
 
@@ -42,7 +38,7 @@ cd frontend
 bun install
 ```
 
-## How to run
+## How to run without Docker
 
 ### 1) Jalankan Backend
 ```bash
@@ -58,6 +54,15 @@ bun run dev
 ```
 Frontend berjalan di: `http://localhost:3000`
 
+## How to run with Docker
+
+```bash
+# Build and run
+docker compose up --build  # Now we can access our website at http://localhost:3000 and http://localhost:6767
+
+# Stop
+docker compose down
+```
 
 ## Author
 | Nama | NIM |
